@@ -5,8 +5,15 @@ Práctica Profesionalizante II · ITSE 2026
 Grupo: Achaval · Cabaña · Constantinidi · Gomez · Pinto Villegas
 
 Tablero interactivo para explorar los resultados del pipeline ETL.
-Lee los archivos generados en la carpeta results/ — no necesita
-ejecutar el pipeline ni depender de módulos externos.
+
+Busca los datos en dos ubicaciones, en este orden:
+  1. results/         — datos generados localmente al correr el pipeline
+                         (más actualizados, uso normal en tu computadora)
+  2. data_snapshot/    — copia de ejemplo versionada en el repositorio
+                         (para que la demo funcione en Streamlit Cloud
+                         sin depender de que el pipeline haya corrido)
+
+No necesita ejecutar el pipeline ni depender de módulos externos.
 
 Uso:
     python -m streamlit run app.py
@@ -15,6 +22,7 @@ Uso:
 from __future__ import annotations
 
 import json
+from datetime import datetime
 from pathlib import Path
 
 import pandas as pd
@@ -27,16 +35,24 @@ st.set_page_config(
     layout="wide",
 )
 
-# Rutas — el dashboard lee lo que produjo el pipeline
-RAIZ = Path(__file__).resolve().parent.parent
+# Rutas — busca primero datos locales reales, y si no hay, el snapshot versionado
+RAIZ = Path(__file__).resolve().parent.parent  # raíz del proyecto
 DIR_RESULTADOS = RAIZ / "results"
-DIR_GRAFICOS = RAIZ / "notebooks"  # donde el EDA guarda los PNG
+DIR_SNAPSHOT = RAIZ / "data_snapshot"
+DIR_GRAFICOS_LOCAL = RAIZ / "notebooks"
+DIR_GRAFICOS_SNAPSHOT = DIR_SNAPSHOT / "graficos"
+
+USANDO_SNAPSHOT = not (DIR_RESULTADOS / "historico_SDE.csv").exists() and \
+                  (DIR_SNAPSHOT / "historico_SDE.csv").exists()
+
+DIR_DATOS_ACTIVA = DIR_SNAPSHOT if USANDO_SNAPSHOT else DIR_RESULTADOS
+DIR_GRAFICOS_ACTIVA = DIR_GRAFICOS_SNAPSHOT if USANDO_SNAPSHOT else DIR_GRAFICOS_LOCAL
 
 
 # ─── Funciones auxiliares ───────────────────────────────────────────────────
 def leer_csv(nombre: str) -> pd.DataFrame | None:
-    """Lee un CSV de results/ si existe."""
-    ruta = DIR_RESULTADOS / nombre
+    """Lee un CSV de la carpeta de datos activa (results/ o data_snapshot/)."""
+    ruta = DIR_DATOS_ACTIVA / nombre
     if ruta.exists():
         return pd.read_csv(ruta)
     return None
@@ -44,7 +60,7 @@ def leer_csv(nombre: str) -> pd.DataFrame | None:
 
 def leer_metadatos(nombre_csv: str) -> dict | None:
     """Lee el .meta.json asociado a un CSV."""
-    ruta = DIR_RESULTADOS / nombre_csv.replace(".csv", ".meta.json")
+    ruta = DIR_DATOS_ACTIVA / nombre_csv.replace(".csv", ".meta.json")
     if ruta.exists():
         with open(ruta, encoding="utf-8") as f:
             return json.load(f)
@@ -53,7 +69,7 @@ def leer_metadatos(nombre_csv: str) -> dict | None:
 
 def mostrar_grafico(nombre: str, titulo: str) -> None:
     """Muestra un PNG del EDA si existe."""
-    for carpeta in [DIR_GRAFICOS, RAIZ, RAIZ / "graficos_eda"]:
+    for carpeta in [DIR_GRAFICOS_ACTIVA, DIR_GRAFICOS_LOCAL, DIR_GRAFICOS_SNAPSHOT, RAIZ]:
         ruta = carpeta / nombre
         if ruta.exists():
             st.image(str(ruta), caption=titulo, use_container_width=True)
@@ -63,8 +79,8 @@ def mostrar_grafico(nombre: str, titulo: str) -> None:
 
 
 def boton_descarga(nombre: str, etiqueta: str) -> None:
-    """Botón para descargar un archivo de results/."""
-    ruta = DIR_RESULTADOS / nombre
+    """Botón para descargar un archivo de la carpeta de datos activa."""
+    ruta = DIR_DATOS_ACTIVA / nombre
     if ruta.exists():
         with open(ruta, "rb") as f:
             st.download_button(etiqueta, f, file_name=nombre, key=nombre)
@@ -76,12 +92,25 @@ def boton_descarga(nombre: str, etiqueta: str) -> None:
 st.title("Mercado Laboral en Santiago del Estero")
 st.caption("Encuesta Permanente de Hogares · Aglomerado 18 (Santiago del Estero — La Banda) · INDEC")
 
+if USANDO_SNAPSHOT:
+    meta_snap = leer_metadatos("historico_SDE.csv")
+    fecha_snap = meta_snap.get("fecha_generacion", "fecha no disponible") if meta_snap else "fecha no disponible"
+    try:
+        fecha_legible = datetime.fromisoformat(fecha_snap).strftime("%d/%m/%Y %H:%M")
+    except (ValueError, TypeError):
+        fecha_legible = fecha_snap
+    st.info(
+        f"📌 Estás viendo una **copia de ejemplo** de los datos (snapshot generado el {fecha_legible}), "
+        f"incluida en el repositorio para que esta demo funcione sin necesidad de correr el pipeline. "
+        f"Para ver datos actualizados, cloná el proyecto y ejecutá `python src/pipeline.py --todos`."
+    )
+
 # Cargar histórico
 df = leer_csv("historico_SDE.csv")
 
 if df is None:
     st.warning(
-        "No se encontró el archivo **results/historico_SDE.csv**.\n\n"
+        "No se encontró el archivo **historico_SDE.csv** ni en `results/` ni en `data_snapshot/`.\n\n"
         "Ejecutá primero el pipeline:\n"
         "```\npython src/pipeline.py --todos\n```"
     )
@@ -186,7 +215,7 @@ with tab3:
     # Validación de esquema
     with col_der:
         st.subheader("Validación de esquema")
-        ruta_val = DIR_RESULTADOS / f"validacion_esquema_{periodo_sel}.json"
+        ruta_val = DIR_DATOS_ACTIVA / f"validacion_esquema_{periodo_sel}.json"
         if ruta_val.exists():
             with open(ruta_val, encoding="utf-8") as f:
                 val = json.load(f)
