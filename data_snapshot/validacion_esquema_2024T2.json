@@ -1,0 +1,36 @@
+{
+  "individual": {
+    "periodo": "2024T2",
+    "base": "individual",
+    "nivel": "ok",
+    "n_columnas_totales": 235,
+    "obligatorias_presentes": [
+      "AGLOMERADO",
+      "CH04",
+      "CH06",
+      "CODUSU",
+      "ESTADO",
+      "NRO_HOGAR",
+      "P21",
+      "PONDERA"
+    ],
+    "obligatorias_faltantes": [],
+    "opcionales_faltantes": [],
+    "fecha_validacion": "2026-07-05T22:00:25.165089"
+  },
+  "hogar": {
+    "periodo": "2024T2",
+    "base": "hogar",
+    "nivel": "ok",
+    "n_columnas_totales": 98,
+    "obligatorias_presentes": [
+      "AGLOMERADO",
+      "CODUSU",
+      "NRO_HOGAR",
+      "REALIZADA"
+    ],
+    "obligatorias_faltantes": [],
+    "opcionales_faltantes": [],
+    "fecha_validacion": "2026-07-05T22:00:25.165438"
+  }
+}

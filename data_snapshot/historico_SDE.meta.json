@@ -1,0 +1,192 @@
+{
+  "archivo": "historico_SDE.csv",
+  "descripcion": "Base histórica acumulada con todos los trimestres procesados.",
+  "version_pipeline": "2.2.0",
+  "fecha_generacion": "2026-07-05T22:01:52.281267",
+  "fuente": {
+    "organismo": "INDEC",
+    "operativo": "Encuesta Permanente de Hogares (EPH)",
+    "url": "https://www.indec.gob.ar/ftp/cuadros/menusuperior/eph/",
+    "aglomerado_codigo": 18,
+    "aglomerado_nombre": "Santiago del Estero - La Banda"
+  },
+  "periodo": null,
+  "estructura": {
+    "n_filas": 12,
+    "n_columnas": 27,
+    "encoding": "utf-8",
+    "separador": ","
+  },
+  "integridad": {
+    "hash_sha256_truncado": "6eda331ef9af675f"
+  },
+  "esquema": [
+    {
+      "nombre": "anio",
+      "tipo": "int64",
+      "descripcion": "Año del trimestre relevado",
+      "nulos": 0
+    },
+    {
+      "nombre": "trimestre",
+      "tipo": "int64",
+      "descripcion": "Número de trimestre (1 a 4)",
+      "nulos": 0
+    },
+    {
+      "nombre": "periodo",
+      "tipo": "object",
+      "descripcion": "Período en formato AAAATtrim",
+      "nulos": 0
+    },
+    {
+      "nombre": "aglomerado",
+      "tipo": "int64",
+      "descripcion": "Código del aglomerado urbano EPH (18 = SDE - La Banda)",
+      "nulos": 0
+    },
+    {
+      "nombre": "n_personas_muestra",
+      "tipo": "int64",
+      "descripcion": "Personas relevadas en la muestra del aglomerado",
+      "nulos": 0
+    },
+    {
+      "nombre": "n_hogares_muestra",
+      "tipo": "int64",
+      "descripcion": "Hogares relevados en la muestra del aglomerado",
+      "nulos": 0
+    },
+    {
+      "nombre": "poblacion_expandida_total",
+      "tipo": "int64",
+      "descripcion": "Población total estimada (suma de PONDERA)",
+      "nulos": 0
+    },
+    {
+      "nombre": "poblacion_expandida_mayor10",
+      "tipo": "int64",
+      "descripcion": "Población de 10 años o más estimada",
+      "nulos": 0
+    },
+    {
+      "nombre": "pea_expandida",
+      "tipo": "int64",
+      "descripcion": "Población Económicamente Activa estimada",
+      "nulos": 0
+    },
+    {
+      "nombre": "ocupados_expandidos",
+      "tipo": "int64",
+      "descripcion": "Personas ocupadas estimadas",
+      "nulos": 0
+    },
+    {
+      "nombre": "desocupados_expandidos",
+      "tipo": "int64",
+      "descripcion": "Personas desocupadas estimadas",
+      "nulos": 0
+    },
+    {
+      "nombre": "inactivos_expandidos",
+      "tipo": "int64",
+      "descripcion": "Personas inactivas estimadas",
+      "nulos": 0
+    },
+    {
+      "nombre": "tasa_actividad",
+      "tipo": "float64",
+      "descripcion": "Tasa de actividad (PEA / Pob ≥10) × 100",
+      "nulos": 0
+    },
+    {
+      "nombre": "tasa_empleo",
+      "tipo": "float64",
+      "descripcion": "Tasa de empleo (Ocupados / Pob ≥10) × 100",
+      "nulos": 0
+    },
+    {
+      "nombre": "tasa_desocupacion",
+      "tipo": "float64",
+      "descripcion": "Tasa de desocupación (Desocupados / PEA) × 100",
+      "nulos": 0
+    },
+    {
+      "nombre": "tasa_inactividad",
+      "tipo": "float64",
+      "descripcion": "Tasa de inactividad (Inactivos / Pob ≥10) × 100",
+      "nulos": 0
+    },
+    {
+      "nombre": "tasa_informalidad",
+      "tipo": "float64",
+      "descripcion": "% de ocupados sin registro (null antes de 4T2023)",
+      "nulos": 3
+    },
+    {
+      "nombre": "ingreso_promedio_observado",
+      "tipo": "float64",
+      "descripcion": "Promedio simple del ingreso ocupación principal",
+      "nulos": 0
+    },
+    {
+      "nombre": "ingreso_mediano_observado",
+      "tipo": "float64",
+      "descripcion": "Mediana del ingreso ocupación principal",
+      "nulos": 0
+    },
+    {
+      "nombre": "ingreso_promedio_ponderado_observado",
+      "tipo": "float64",
+      "descripcion": "Ingreso promedio ponderado por PONDERA",
+      "nulos": 0
+    },
+    {
+      "nombre": "n_ocupados_con_ingreso_valido",
+      "tipo": "int64",
+      "descripcion": "Cantidad de ocupados con P21 > 0",
+      "nulos": 0
+    },
+    {
+      "nombre": "n_ocupados_sin_respuesta_ingreso",
+      "tipo": "int64",
+      "descripcion": "Cantidad de ocupados con P21 = -9",
+      "nulos": 0
+    },
+    {
+      "nombre": "tasa_no_respuesta_ingresos_ocupados",
+      "tipo": "float64",
+      "descripcion": "% de ocupados que no respondieron ingreso",
+      "nulos": 0
+    },
+    {
+      "nombre": "hogares_encuestados",
+      "tipo": "int64",
+      "descripcion": "Hogares con REALIZADA = 1",
+      "nulos": 0
+    },
+    {
+      "nombre": "tasa_no_respuesta_hogar",
+      "tipo": "float64",
+      "descripcion": "% de hogares con REALIZADA = 0",
+      "nulos": 0
+    },
+    {
+      "nombre": "fecha_procesamiento",
+      "tipo": "object",
+      "descripcion": "Fecha y hora del procesamiento",
+      "nulos": 0
+    },
+    {
+      "nombre": "fuente",
+      "tipo": "object",
+      "descripcion": "Fuente de los datos",
+      "nulos": 0
+    }
+  ],
+  "notas": [
+    "tasa_informalidad es null en trimestres anteriores al 4T2023.",
+    "Valores monetarios en pesos argentinos nominales (no deflactados).",
+    "El pipeline no imputa valores faltantes."
+  ]
+}
