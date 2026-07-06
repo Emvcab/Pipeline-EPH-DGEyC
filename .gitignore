@@ -1,0 +1,52 @@
+# ─── Python ──────────────────────────────────────────────
+__pycache__/
+*.py[cod]
+*$py.class
+*.so
+.Python
+*.egg-info/
+.eggs/
+build/
+dist/
+
+# Entornos virtuales
+venv/
+env/
+.venv/
+.env
+
+# ─── IDEs ────────────────────────────────────────────────
+.vscode/
+.idea/
+*.swp
+*.swo
+.DS_Store
+
+# ─── Jupyter ─────────────────────────────────────────────
+.ipynb_checkpoints/
+*.ipynb_checkpoints
+
+# ─── Datos y resultados del pipeline ────────────────────
+# No versionar datos descargados (son públicos del INDEC, pesados, regenerables)
+data/*
+!data/.gitkeep
+
+# No versionar resultados generados (se regeneran corriendo el pipeline)
+results/*
+!results/.gitkeep
+
+# No versionar logs (uno por corrida)
+logs/*
+!logs/.gitkeep
+
+# ─── Archivos temporales ────────────────────────────────
+*.tmp
+*.bak
+*.log
+*~
+
+# ─── Testing y coverage ─────────────────────────────────
+.pytest_cache/
+.coverage
+htmlcov/
+.tox/
