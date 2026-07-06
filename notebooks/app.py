@@ -28,7 +28,7 @@ st.set_page_config(
 )
 
 # Rutas — el dashboard lee lo que produjo el pipeline
-RAIZ = Path(__file__).resolve().parent
+RAIZ = Path(__file__).resolve().parent.parent
 DIR_RESULTADOS = RAIZ / "results"
 DIR_GRAFICOS = RAIZ / "notebooks"  # donde el EDA guarda los PNG
 
