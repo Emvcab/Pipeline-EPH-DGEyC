@@ -1,0 +1,13 @@
+periodo,poblacion_total_positiva,tasas_en_rango,actividad_inactividad_consistente,periodo_duplicado,estado_informalidad,observacion
+2023T1,True,True,True,False,NO_DISPONIBLE,Control agregado; los conteos de nulos por variable requieren microdatos.
+2023T2,True,True,True,False,NO_DISPONIBLE,Control agregado; los conteos de nulos por variable requieren microdatos.
+2023T3,True,True,True,False,NO_DISPONIBLE,Control agregado; los conteos de nulos por variable requieren microdatos.
+2023T4,True,True,True,False,DISPONIBLE,Control agregado; los conteos de nulos por variable requieren microdatos.
+2024T1,True,True,True,False,DISPONIBLE,Control agregado; los conteos de nulos por variable requieren microdatos.
+2024T2,True,True,True,False,DISPONIBLE,Control agregado; los conteos de nulos por variable requieren microdatos.
+2024T3,True,True,True,False,DISPONIBLE,Control agregado; los conteos de nulos por variable requieren microdatos.
+2024T4,True,True,True,False,DISPONIBLE,Control agregado; los conteos de nulos por variable requieren microdatos.
+2025T1,True,True,True,False,DISPONIBLE,Control agregado; los conteos de nulos por variable requieren microdatos.
+2025T2,True,True,True,False,DISPONIBLE,Control agregado; los conteos de nulos por variable requieren microdatos.
+2025T3,True,True,True,False,DISPONIBLE,Control agregado; los conteos de nulos por variable requieren microdatos.
+2025T4,True,True,True,False,DISPONIBLE,Control agregado; los conteos de nulos por variable requieren microdatos.

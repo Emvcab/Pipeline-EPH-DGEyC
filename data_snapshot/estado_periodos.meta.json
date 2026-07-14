@@ -1,0 +1,92 @@
+{
+  "nombre_archivo": "estado_periodos.csv",
+  "descripcion": "Estado de los períodos incluidos en el snapshot.",
+  "clasificacion_load": "Auditoría",
+  "fuente": "Encuesta Permanente de Hogares - microdatos públicos",
+  "organismo_productor": "Instituto Nacional de Estadística y Censos (INDEC)",
+  "url_origen": "https://www.indec.gob.ar/ftp/cuadros/menusuperior/eph/",
+  "aglomerado_codigo": 18,
+  "aglomerado_nombre": "Santiago del Estero - La Banda",
+  "periodo": null,
+  "anio": null,
+  "trimestre": null,
+  "fecha_hora_generacion": "2026-07-13T20:25:35",
+  "version_pipeline": "3.0.0",
+  "filas": 12,
+  "columnas": 8,
+  "variables": [
+    "periodo",
+    "fecha_esperada",
+    "fecha_deteccion",
+    "fecha_procesamiento_estado",
+    "intentos",
+    "estado",
+    "mensaje",
+    "ultima_actualizacion"
+  ],
+  "definicion_variables": {
+    "periodo": "Período en formato AAAATn",
+    "fecha_esperada": "Mes y año esperados de publicación",
+    "fecha_deteccion": "Primera fecha en que se detectó el período",
+    "fecha_procesamiento_estado": "Fecha de procesamiento registrada en el control",
+    "intentos": "Cantidad de intentos de procesamiento",
+    "estado": "Estado del período dentro del ciclo de publicación",
+    "mensaje": "Resultado comprensible del último control",
+    "ultima_actualizacion": "Fecha y hora de la última actualización del estado"
+  },
+  "tipos_de_datos": {
+    "periodo": "object",
+    "fecha_esperada": "object",
+    "fecha_deteccion": "object",
+    "fecha_procesamiento_estado": "object",
+    "intentos": "int64",
+    "estado": "object",
+    "mensaje": "object",
+    "ultima_actualizacion": "object"
+  },
+  "unidades": {
+    "periodo": "conteo, código o texto",
+    "fecha_esperada": "conteo, código o texto",
+    "fecha_deteccion": "conteo, código o texto",
+    "fecha_procesamiento_estado": "conteo, código o texto",
+    "intentos": "conteo, código o texto",
+    "estado": "conteo, código o texto",
+    "mensaje": "conteo, código o texto",
+    "ultima_actualizacion": "conteo, código o texto"
+  },
+  "formulas": {},
+  "filtros_aplicados": [
+    "AGLOMERADO = 18",
+    "P21 > 0 para estadísticas de ingresos",
+    "PONDERA válida y positiva para promedios ponderados de ingresos"
+  ],
+  "ponderador": "PONDERA",
+  "cantidad_nulos": {
+    "periodo": 0,
+    "fecha_esperada": 0,
+    "fecha_deteccion": 0,
+    "fecha_procesamiento_estado": 0,
+    "intentos": 0,
+    "estado": 0,
+    "mensaje": 0,
+    "ultima_actualizacion": 0
+  },
+  "codigos_especiales": {
+    "-9": "no respuesta",
+    "-8": "no sabe",
+    "-7": "otro especial"
+  },
+  "advertencias_metodologicas": [
+    "No se imputan valores faltantes ni se reemplazan por cero.",
+    "Los ingresos se expresan en pesos argentinos nominales y no están deflactados.",
+    "La informalidad permanece nula cuando EMPLEO no está disponible.",
+    "proporcion_inactiva_total es un indicador complementario de la tasa de actividad oficial.",
+    "El aglomerado 18 no permite separar Santiago Capital de La Banda."
+  ],
+  "ingresos_nominales": false,
+  "estado_validacion": "VALIDADO",
+  "ultima_ejecucion_exitosa": "2026-07-13T20:25:35",
+  "archivo_origen": "historico_SDE.csv",
+  "identificador_ejecucion": "ada577108c1506ab",
+  "hash_sha256": "29e0e9d3eeeabeda1cfd6f49c760617dc762e0f94274683394ae119953ef0529"
+}

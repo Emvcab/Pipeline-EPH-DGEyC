@@ -1,178 +1,59 @@
-# Arquitectura técnica del pipeline
+# Arquitectura técnica
 
-> Decisiones de diseño y organización interna del código
+## Flujo
 
----
-
-## Filosofía de diseño
-
-El pipeline está construido siguiendo el principio **menos es más** (KISS - Keep It Simple, Stupid). Optamos deliberadamente por **un archivo único bien organizado** en lugar de modularización en múltiples archivos.
-
-### ¿Por qué archivo único?
-
-| Criterio | Archivo único | Modular |
-|---|---|---|
-| Tamaño del proyecto (~400 líneas) | ✅ Apropiado | ❌ Ingeniería excesiva |
-| Mantenibilidad por usuario no-developer | ✅ Lee de arriba abajo | ❌ Salta entre archivos |
-| Portabilidad | ✅ Un archivo se comparte fácil | ❌ Estructura compleja |
-| Cantidad de desarrolladores activos | ✅ 1-4 personas | ❌ Equipo grande |
-
-La modularización tendría sentido si superáramos las ~1000 líneas o si varios equipos tocaran el código en paralelo. No es nuestro caso.
-
----
-
-## Modelo ETL clásico
-
-El pipeline sigue el patrón **Extract → Transform → Load** con un paso adicional de **Report**:
-
-```
-        ┌─────────────────────────────────────────┐
-        │              EXTRACCIÓN                  │
-        │   descargar_zip() → extraer_zip() →     │
-        │         leer_archivo_eph()               │
-        └─────────────┬───────────────────────────┘
-                      │
-                      ▼
-        ┌─────────────────────────────────────────┐
-        │            TRANSFORMACIÓN                │
-        │  filtrar_sde() → calcular_indicadores() │
-        │  reporte_calidad() → unir_bases()       │
-        └─────────────┬───────────────────────────┘
-                      │
-                      ▼
-        ┌─────────────────────────────────────────┐
-        │                CARGA                     │
-        │           guardar_trimestre()            │
-        └─────────────┬───────────────────────────┘
-                      │
-                      ▼
-        ┌─────────────────────────────────────────┐
-        │               REPORTE                    │
-        │   imprimir_resumen() + archivo .log      │
-        └─────────────────────────────────────────┘
+```text
+Descarga temporal → ZIP válido → lectura y esquema → filtro Aglomerado 18
+        → cálculo ponderado → staging de salidas → controles críticos
+        → VALIDADO: promoción atómica a results/
+        → FALLIDO: conservar histórico y snapshot anteriores
 ```
 
----
+El pipeline se mantiene en `src/pipeline.py` para facilitar su lectura operativa. Las funciones aceptan directorios alternativos en los puntos que se prueban, lo que evita escribir en resultados reales durante los tests.
 
-## Organización interna del código
+## Decisiones metodológicas
 
-El archivo `pipeline.py` está dividido en **8 secciones** delimitadas por comentarios visuales:
+- Las tasas principales de actividad y empleo usan población total expandida.
+- La desocupación usa PEA expandida.
+- La proporción inactiva total se define como complemento de actividad oficial.
+- Las tasas de 10 años y más tienen nombres específicos.
+- `PONDERA` se aplica a estimaciones poblacionales, informalidad e ingreso promedio ponderado.
+- Los faltantes no se imputan ni se sustituyen por cero.
+- Los ingresos son nominales.
 
-| # | Sección | Líneas aprox. | Responsabilidad |
-|---|---|---|---|
-| 1 | CONFIGURACIÓN | ~15 | Constantes globales |
-| 2 | LOGGING | ~20 | Configuración de logs |
-| 3 | EXTRACCIÓN | ~80 | Descarga, descompresión, lectura |
-| 4 | TRANSFORMACIÓN | ~120 | Cálculo de indicadores |
-| 5 | CALIDAD/UNIÓN | ~30 | Reportes auxiliares |
-| 6 | CARGA | ~40 | Guardado de archivos |
-| 7 | ORQUESTACIÓN | ~60 | Coordinación del flujo |
-| 8 | ENTRADA | ~40 | CLI con argparse |
+`migrar_historico()` renombra las columnas históricas ambiguas y vuelve a calcular las tasas principales desde sus componentes expandidos. La operación es explícita e idempotente.
 
----
+## Transacción de publicación
 
-## Decisiones técnicas clave
+`guardar_trimestre()` crea indicadores, calidad, histórico candidato y metadatos en una carpeta temporal. `validar_publicacion()` controla Aglomerado 18, población positiva, duplicados, rango de tasas, complementariedad, desocupación calculable, filas razonables, archivos, metadatos e informalidad no disponible.
 
-### Lectura robusta de archivos
+Sólo una candidatura válida se promueve a `results/`. Si falla una escritura durante la promoción, se restauran los archivos previos.
 
-El INDEC ocasionalmente varía el separador y la codificación entre trimestres. En lugar de asumir un único formato, probamos **4 combinaciones** hasta encontrar la correcta:
+## Trazabilidad
 
-```python
-LECTURAS = [
-    {"sep": ";", "encoding": "utf-8"},
-    {"sep": ";", "encoding": "latin1"},
-    {"sep": ",", "encoding": "utf-8"},
-    {"sep": ",", "encoding": "latin1"},
-]
-```
+`estado_periodos.csv` registra `PENDIENTE`, `DESCARGADO`, `PROCESADO`, `EN_REVISION`, `VALIDADO`, `FALLIDO` o `PUBLICADO`.
 
-### Manejo de variables ausentes
+Los metadatos se generan automáticamente para cada CSV y salida de auditoría. `manifest_salidas.json` permite descubrir archivos, clasificación, período, validación, metadata y fecha de generación.
 
-La variable `EMPLEO` no existe antes del 4T2023. En lugar de fallar con `KeyError`, verificamos su existencia y devolvemos `None` para la tasa de informalidad en esos trimestres:
+## Snapshot
 
-```python
-if "EMPLEO" in ocupados.columns:
-    # calcular
-else:
-    tasa_inf = None
-```
+`preparar_snapshot_desde_historico()` construye en staging un paquete agregado con histórico, indicadores trimestrales, estados, validaciones de esquema, documentación y manifiesto. No copia `base_unida`, ZIP ni microdatos. El directorio vigente se reemplaza sólo cuando el nuevo snapshot completo es válido.
 
-### División por cero segura
+`publicar_snapshot_validado()` exige que el último período de `results/` esté `VALIDADO` o `PUBLICADO`. Es una preparación local; el despliegue de Streamlit Cloud es una acción externa y separada.
 
-Implementamos una función auxiliar `porcentaje()` que maneja el caso de denominador cero devolviendo `None` en lugar de lanzar excepción.
+## Dashboard y escalabilidad
 
-### Histórico sin duplicados
+`notebooks/app.py` usa rutas relativas. Prioriza `results/` sólo si el último período está validado; de lo contrario usa `data_snapshot/`. Los gráficos se construyen desde CSV agregados.
 
-Al actualizar el histórico, si el período ya existe lo eliminamos antes de agregar la nueva versión. Esto permite reprocesar un trimestre sin generar duplicados.
+Las cargas se distinguen como Crítica, Analítica, Calidad, Auditoría, Operativa, Visualización y Disponibilización. En una etapa posterior pueden agregarse métricas por etapa sin modificar las fórmulas públicas.
 
-```python
-hist = hist[hist["periodo"] != periodo]
-hist = pd.concat([hist, df_ind], ignore_index=True)
-```
+## Cuellos de botella y límites actuales
 
-### Búsqueda recursiva en ZIPs
+- **Dependencia del INDEC.** El pipeline necesita que el INDEC publique el trimestre y sostenga la URL y el empaquetado actuales. Si la publicación se demora o cambia de ubicación, no hay dato nuevo que procesar y el período queda `PENDIENTE`.
+- **Cambios de formato de origen.** Nombres de archivos, variables, codificación o separadores pueden cambiar entre trimestres. La lectura prueba cuatro combinaciones conocidas y la validación de esquema detiene el proceso ante faltantes críticos, pero un cambio profundo exige actualizar los esquemas esperados en el código.
+- **Descarga y lectura completas antes del filtrado.** Cada corrida baja el ZIP nacional y carga la base completa en memoria antes de filtrar el Aglomerado 18. La descarga depende de la red y es la etapa más lenta; la lectura carga cientos de columnas de todos los aglomerados para conservar unas 1.500 filas locales.
+- **Crecimiento en memoria y tiempo.** El consumo escala con el tamaño de las bases nacionales y con la cantidad de períodos o variables que se agreguen. Con 12 trimestres el procesamiento local demora segundos por período una vez descargados los ZIP; el histórico agregado, en cambio, crece una fila por trimestre y no compromete recursos.
+- **Publicación con revisión humana.** La actualización del snapshot es una decisión deliberada (`--publicar-snapshot` tras revisar el estado `VALIDADO`), no un proceso automático. Es un límite aceptado: prioriza la revisión institucional sobre la inmediatez.
+- **Regeneración tras cambios.** Cualquier cambio de fórmulas, columnas o períodos exige regenerar snapshot y manifiesto para que datos, metadatos y hashes vuelvan a ser coherentes.
 
-Algunos ZIPs del INDEC anidan los archivos en subcarpetas. Usamos `Path.rglob()` para encontrarlos sin importar la profundidad:
-
-```python
-ind = next((p for p in destino.rglob("*.txt") if "individual" in p.name.lower()), None)
-```
-
----
-
-## Logging estructurado
-
-Reemplazamos `print` por logging profesional con dos handlers simultáneos:
-
-1. **Consola** — para feedback inmediato durante la ejecución
-2. **Archivo** — para trazabilidad y diagnóstico posterior
-
-Cada corrida genera un archivo `logs/pipeline_YYYYMMDD_HHMMSS.log` independiente.
-
----
-
-## Manejo de errores
-
-Cada función maneja sus excepciones específicas:
-
-- `requests.RequestException` → fallo de descarga
-- `zipfile.BadZipFile` → ZIP corrupto
-- `UnicodeDecodeError, pd.errors.ParserError` → formato de archivo no esperado
-- `Exception` genérica solo en el orquestador, con `log.exception()` para capturar el stack trace completo
-
----
-
-## Convenciones de código
-
-- **Type hints** completos en firma de funciones
-- **Docstrings** en una línea concisa para cada función
-- **Constantes** en `MAYUSCULAS_CON_GUION_BAJO`
-- **Funciones** en `minusculas_con_guion_bajo` (snake_case)
-- **Líneas** no exceden 100 caracteres
-- **Imports** organizados: stdlib → terceros → locales
-
----
-
-## Extensibilidad
-
-Para agregar un nuevo indicador, basta con:
-
-1. Calcular el valor en `calcular_indicadores()`
-2. Agregarlo al diccionario que devuelve la función
-3. (Opcional) Agregarlo al resumen impreso en `imprimir_resumen()`
-
-La nueva columna aparece automáticamente en `historico_SDE.csv` sin tocar nada más.
-
-Para agregar un nuevo año al procesamiento masivo, solo se modifica la constante `ANIOS` en la sección de configuración.
-
----
-
-## Testing
-
-La suite de tests en `tests/test_pipeline.py` valida:
-
-- Funciones puras (cálculo de porcentaje, manejo de divisiones por cero)
-- Lógica de filtrado por aglomerado
-- Estructura del diccionario de indicadores
-
-No se testea la descarga ni la lectura de archivos reales (eso requiere infraestructura del INDEC).
+Estas limitaciones están controladas de manera parcial por las validaciones de esquema y de publicación, la construcción en staging, los estados por período y el rollback que conserva el último resultado válido. Controlan el efecto de una falla, no su causa: la disponibilidad y el formato del origen siguen fuera del alcance del sistema.

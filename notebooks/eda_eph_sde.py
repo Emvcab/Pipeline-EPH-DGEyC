@@ -24,7 +24,7 @@ Genera 4 gráficos PNG.
 # Este EDA se enfoca en **cuatro visualizaciones clave** que resumen la evolución del
 # mercado laboral del aglomerado Santiago del Estero — La Banda (código 18):
 # 
-# 1. **Serie de tiempo** del mercado laboral (actividad, empleo, inactividad)
+# 1. **Serie de tiempo** de actividad y empleo oficiales
 # 2. **Informalidad laboral** trimestre a trimestre
 # 3. **Ingresos y no respuesta** de ingresos
 # 4. **Comparación interanual** (mismo trimestre entre años)
@@ -67,7 +67,13 @@ import matplotlib.pyplot as plt
 import matplotlib.ticker as mtick
 
 EN_COLAB = False
-candidatos = [Path("historico_SDE.csv"), Path("results/historico_SDE.csv"), Path("../results/historico_SDE.csv")]
+candidatos = [
+    Path("historico_SDE.csv"),
+    Path("results/historico_SDE.csv"),
+    Path("data_snapshot/historico_SDE.csv"),
+    Path("../results/historico_SDE.csv"),
+    Path("../data_snapshot/historico_SDE.csv"),
+]
 ARCHIVO = next((str(p) for p in candidatos if p.exists()), "historico_SDE.csv")
 df = pd.read_csv(ARCHIVO)
 df = df.sort_values(["anio","trimestre"]).reset_index(drop=True)
@@ -101,8 +107,8 @@ print("Configuración lista.")
 
 # Resumen rápido de los indicadores clave
 
-cols_resumen = ["periodo", "tasa_actividad", "tasa_empleo", "tasa_desocupacion",
-                "tasa_inactividad", "tasa_informalidad",
+cols_resumen = ["periodo", "tasa_actividad_oficial", "tasa_empleo_oficial",
+                "tasa_desocupacion", "proporcion_inactiva_total", "tasa_informalidad",
                 "tasa_no_respuesta_ingresos_ocupados",
                 "ingreso_promedio_ponderado_observado"]
 cols_disponibles = [c for c in cols_resumen if c in df.columns]
@@ -117,20 +123,20 @@ print(f"Población representada (último trim): {df['poblacion_expandida_total']
 # ────────────────────────────────────────────────────────────────────
 # ## 3. Gráfico 1 — Serie de tiempo del mercado laboral
 # 
-# Muestra la evolución trimestral de la actividad, el empleo y la inactividad. Es la
+# Muestra la evolución trimestral de la actividad y el empleo oficiales. Es la
 # visualización central: permite ver la tendencia general del mercado laboral.
 
 fig, ax = plt.subplots(figsize=(12, 5))
 
-ax.plot(x, df["tasa_actividad"], color=AZUL, marker="o", linewidth=2.2, label="Actividad")
-ax.plot(x, df["tasa_empleo"], color=VERDE, marker="s", linewidth=2.2, label="Empleo")
-ax.plot(x, df["tasa_inactividad"], color=VIOLETA, marker="^", linewidth=2.2,
-        linestyle="--", label="Inactividad")
+ax.plot(x, df["tasa_actividad_oficial"], color=AZUL, marker="o", linewidth=2.2,
+        label="Actividad oficial")
+ax.plot(x, df["tasa_empleo_oficial"], color=VERDE, marker="s", linewidth=2.2,
+        label="Empleo oficial")
 
 ax.set_xticks(x)
 ax.set_xticklabels(periodos, rotation=45, ha="right", fontsize=9)
 ax.yaxis.set_major_formatter(mtick.PercentFormatter(decimals=0))
-ax.set_ylabel("% de la población de 10 años y más", fontsize=10)
+ax.set_ylabel("% de la población total", fontsize=10)
 ax.set_title("Evolución del mercado laboral — Santiago del Estero · 2023-2025",
              fontsize=13, fontweight="bold", pad=12)
 ax.legend(loc="center right", fontsize=10, frameon=True)
@@ -144,7 +150,7 @@ plt.savefig("eda_1_mercado_laboral.png", bbox_inches="tight", dpi=140)
 plt.show()
 
 # Lectura automática
-act_ini, act_fin = df["tasa_actividad"].iloc[0], df["tasa_actividad"].iloc[-1]
+act_ini, act_fin = df["tasa_actividad_oficial"].iloc[0], df["tasa_actividad_oficial"].iloc[-1]
 print(f"\nLa actividad pasó de {act_ini:.1f}% a {act_fin:.1f}% "
       f"({'▼' if act_fin < act_ini else '▲'} {abs(act_fin-act_ini):.1f} pp)")
 
@@ -196,7 +202,7 @@ print(f"Más de la mitad de los ocupados trabaja sin registro en todos los trime
 # 
 # Combina dos series en un mismo gráfico con doble eje: la evolución del ingreso promedio
 # ponderado (barras) y la tasa de no respuesta de ingresos (línea). Esta última es el
-# insumo directo del modelo del Hito 3.
+# indicador de calidad que requiere seguimiento periódico.
 
 fig, ax1 = plt.subplots(figsize=(12, 5))
 
@@ -233,7 +239,7 @@ plt.show()
 nr_ini = df["tasa_no_respuesta_ingresos_ocupados"].iloc[0]
 nr_fin = df["tasa_no_respuesta_ingresos_ocupados"].iloc[-1]
 print(f"\nNo respuesta de ingresos: {nr_ini:.1f}% → {nr_fin:.1f}%")
-print(f"El aumento en 2025 es el fenómeno que estudiará el modelo del Hito 3.")
+print("La no respuesta se monitorea como indicador de calidad de los microdatos públicos.")
 
 
 # ────────────────────────────────────────────────────────────────────
@@ -247,8 +253,8 @@ fig.suptitle("Comparación interanual — mismo trimestre entre años",
              fontsize=13, fontweight="bold", y=1.02)
 
 indicadores = [
-    ("tasa_actividad", "Tasa de actividad (%)", AZUL),
-    ("tasa_inactividad", "Tasa de inactividad (%)", VIOLETA),
+    ("tasa_actividad_oficial", "Tasa de actividad oficial (%)", AZUL),
+    ("proporcion_inactiva_total", "Proporción inactiva total (%)", VIOLETA),
     ("tasa_no_respuesta_ingresos_ocupados", "No respuesta ingresos (%)", ROJO),
 ]
 
@@ -285,10 +291,10 @@ print(f"RESUMEN — {primer['periodo']} → {ultimo['periodo']}")
 print("=" * 58)
 
 for col, label in [
-    ("tasa_actividad",                     "Actividad         "),
-    ("tasa_empleo",                        "Empleo            "),
+    ("tasa_actividad_oficial",             "Actividad oficial "),
+    ("tasa_empleo_oficial",                "Empleo oficial    "),
     ("tasa_desocupacion",                  "Desocupación      "),
-    ("tasa_inactividad",                   "Inactividad       "),
+    ("proporcion_inactiva_total",          "Prop. inactiva    "),
     ("tasa_no_respuesta_ingresos_ocupados","No resp. ingresos "),
 ]:
     vi, vf = primer[col], ultimo[col]
@@ -317,7 +323,7 @@ print("=" * 58)
 # sin registro en todos los trimestres disponibles.
 # 
 # **4. La no respuesta de ingresos creció en 2025** — de menos del 1% en 2023 a valores de
-# 3-4% en 2025. Este patrón es el objeto de estudio del modelo del Hito 3.
+# 3-4% en 2025. Este patrón se mantiene como indicador de calidad para seguimiento.
 # 
 # ---
 # *EDA — Práctica Profesionalizante II · ITSE 2026*

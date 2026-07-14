@@ -1,338 +1,418 @@
-"""
-Dashboard EPH — Santiago del Estero (Aglomerado 18)
-====================================================
-Práctica Profesionalizante II · ITSE 2026
-Grupo: Achaval · Cabaña · Constantinidi · Gomez · Pinto Villegas
-
-Tablero interactivo para explorar los resultados del pipeline ETL.
-
-Busca los datos en dos ubicaciones, en este orden:
-  1. results/         — datos generados localmente al correr el pipeline
-                         (más actualizados, uso normal en tu computadora)
-  2. data_snapshot/    — copia de ejemplo versionada en el repositorio
-                         (para que la demo funcione en Streamlit Cloud
-                         sin depender de que el pipeline haya corrido)
-
-No necesita ejecutar el pipeline ni depender de módulos externos.
-
-Uso:
-    python -m streamlit run app.py
-"""
+"""Dashboard institucional de indicadores EPH para el aglomerado 18."""
 
 from __future__ import annotations
 
 import json
-from datetime import datetime
+import sys
 from pathlib import Path
 
 import pandas as pd
 import streamlit as st
 
-# ─── Configuración de la página ─────────────────────────────────────────────
+
 st.set_page_config(
-    page_title="EPH Santiago del Estero",
+    page_title="EPH · Santiago del Estero - La Banda",
     page_icon="📊",
     layout="wide",
 )
 
-# Rutas — busca primero datos locales reales, y si no hay, el snapshot versionado
-RAIZ = Path(__file__).resolve().parent.parent  # raíz del proyecto
+RAIZ = Path(__file__).resolve().parent.parent
+sys.path.insert(0, str(RAIZ / "src"))
+
+from pipeline import normalizar_estado, normalizar_periodo
+
+
 DIR_RESULTADOS = RAIZ / "results"
 DIR_SNAPSHOT = RAIZ / "data_snapshot"
-DIR_GRAFICOS_LOCAL = RAIZ / "notebooks"
-DIR_GRAFICOS_SNAPSHOT = DIR_SNAPSHOT / "graficos"
-
-USANDO_SNAPSHOT = not (DIR_RESULTADOS / "historico_SDE.csv").exists() and \
-                  (DIR_SNAPSHOT / "historico_SDE.csv").exists()
-
-DIR_DATOS_ACTIVA = DIR_SNAPSHOT if USANDO_SNAPSHOT else DIR_RESULTADOS
-DIR_GRAFICOS_ACTIVA = DIR_GRAFICOS_SNAPSHOT if USANDO_SNAPSHOT else DIR_GRAFICOS_LOCAL
+DIR_DOCS = RAIZ / "docs"
+ESTADOS_VALIDOS = {"VALIDADO", "PUBLICADO"}
 
 
-# ─── Funciones auxiliares ───────────────────────────────────────────────────
-def leer_csv(nombre: str) -> pd.DataFrame | None:
-    """Lee un CSV de la carpeta de datos activa (results/ o data_snapshot/)."""
-    ruta = DIR_DATOS_ACTIVA / nombre
-    if ruta.exists():
-        return pd.read_csv(ruta)
-    return None
-
-
-def leer_metadatos(nombre_csv: str) -> dict | None:
-    """Lee el .meta.json asociado a un CSV."""
-    ruta = DIR_DATOS_ACTIVA / nombre_csv.replace(".csv", ".meta.json")
-    if ruta.exists():
-        with open(ruta, encoding="utf-8") as f:
-            return json.load(f)
-    return None
-
-
-def mostrar_grafico(nombre: str, titulo: str) -> None:
-    """Muestra un PNG del EDA si existe."""
-    for carpeta in [DIR_GRAFICOS_ACTIVA, DIR_GRAFICOS_LOCAL, DIR_GRAFICOS_SNAPSHOT, RAIZ]:
-        ruta = carpeta / nombre
-        if ruta.exists():
-            st.image(str(ruta), caption=titulo, use_container_width=True)
-            return
-    st.info(f"El gráfico «{titulo}» todavía no fue generado. "
-            f"Ejecutá el notebook del EDA para producirlo.")
-
-
-def boton_descarga(nombre: str, etiqueta: str) -> None:
-    """Botón para descargar un archivo de la carpeta de datos activa."""
-    ruta = DIR_DATOS_ACTIVA / nombre
-    if ruta.exists():
-        with open(ruta, "rb") as f:
-            st.download_button(etiqueta, f, file_name=nombre, key=nombre)
-    else:
-        st.caption(f"— {nombre} (no disponible)")
-
-
-# ─── Encabezado ─────────────────────────────────────────────────────────────
-st.title("Mercado Laboral en Santiago del Estero")
-st.caption("Encuesta Permanente de Hogares · Aglomerado 18 (Santiago del Estero — La Banda) · INDEC")
-
-if USANDO_SNAPSHOT:
-    meta_snap = leer_metadatos("historico_SDE.csv")
-    fecha_snap = meta_snap.get("fecha_generacion", "fecha no disponible") if meta_snap else "fecha no disponible"
+def leer_json(ruta: Path) -> dict | None:
+    """Lee JSON sin interrumpir el dashboard si falta o está dañado."""
     try:
-        fecha_legible = datetime.fromisoformat(fecha_snap).strftime("%d/%m/%Y %H:%M")
-    except (ValueError, TypeError):
-        fecha_legible = fecha_snap
-    st.info(
-        f"📌 Estás viendo una **copia de ejemplo** de los datos (snapshot generado el {fecha_legible}), "
-        f"incluida en el repositorio para que esta demo funcione sin necesidad de correr el pipeline. "
-        f"Para ver datos actualizados, cloná el proyecto y ejecutá `python src/pipeline.py --todos`."
-    )
+        return json.loads(ruta.read_text(encoding="utf-8")) if ruta.exists() else None
+    except (OSError, json.JSONDecodeError):
+        return None
 
-# Cargar histórico
-df = leer_csv("historico_SDE.csv")
 
-if df is None:
-    st.warning(
-        "No se encontró el archivo **historico_SDE.csv** ni en `results/` ni en `data_snapshot/`.\n\n"
-        "Ejecutá primero el pipeline:\n"
-        "```\npython src/pipeline.py --todos\n```"
+def leer_csv(ruta: Path) -> pd.DataFrame | None:
+    """Lee CSV con un resultado comprensible ante archivos ausentes o inválidos."""
+    try:
+        return pd.read_csv(ruta) if ruta.exists() else None
+    except (OSError, pd.errors.ParserError, UnicodeDecodeError):
+        return None
+
+
+def directorio_publicable(directorio: Path) -> bool:
+    """Acepta un directorio sólo si su último período está validado."""
+    historico = leer_csv(directorio / "historico_SDE.csv")
+    estados = leer_csv(directorio / "estado_periodos.csv")
+    if historico is None or historico.empty or estados is None or estados.empty:
+        return False
+    periodos_historico = historico["periodo"].map(normalizar_periodo)
+    periodos_estado = estados["periodo"].map(normalizar_periodo)
+    estados_normalizados = estados["estado"].map(normalizar_estado)
+    if periodos_historico.isna().any() or periodos_estado.isna().any():
+        return False
+    ultimo_indice = historico.sort_values(["anio", "trimestre"]).index[-1]
+    ultimo = periodos_historico.loc[ultimo_indice]
+    fila = estados[periodos_estado == ultimo]
+    if fila.empty:
+        return False
+    return estados_normalizados.loc[fila.index[-1]] in ESTADOS_VALIDOS
+
+
+def seleccionar_fuente() -> tuple[Path | None, bool, str]:
+    """Prioriza resultados locales validados y conserva el snapshot como contingencia."""
+    if directorio_publicable(DIR_RESULTADOS):
+        return DIR_RESULTADOS, False, "Resultados locales validados"
+    if directorio_publicable(DIR_SNAPSHOT):
+        return DIR_SNAPSHOT, True, "Snapshot agregado validado"
+    return None, False, "Sin datos validados"
+
+
+def formato_numero(valor: object, decimales: int = 0, prefijo: str = "") -> str:
+    """Formatea métricas y evita mostrar errores cuando el dato no existe."""
+    if valor is None or pd.isna(valor):
+        return "No disponible"
+    return f"{prefijo}{float(valor):,.{decimales}f}".replace(",", "X").replace(".", ",").replace("X", ".")
+
+
+def formato_tasa(valor: object) -> str:
+    return "No disponible" if valor is None or pd.isna(valor) else f"{float(valor):.2f}%"
+
+
+def boton_descarga(ruta: Path, etiqueta: str, clave: str) -> None:
+    """Ofrece un archivo existente o explica claramente su ausencia."""
+    if ruta.exists() and ruta.is_file():
+        st.download_button(
+            etiqueta,
+            data=ruta.read_bytes(),
+            file_name=ruta.name,
+            key=clave,
+        )
+    else:
+        st.caption(f"{ruta.name}: no disponible para esta fuente.")
+
+
+DIR_ACTIVO, USANDO_SNAPSHOT, DESCRIPCION_FUENTE = seleccionar_fuente()
+
+st.title("Mercado laboral en Santiago del Estero - La Banda")
+st.markdown("**Fuente:** Encuesta Permanente de Hogares — INDEC.")
+st.markdown("**Alcance territorial:** Aglomerado 18 — Santiago del Estero - La Banda.")
+st.caption(
+    "Los datos públicos son producidos por el INDEC. Los indicadores son calculados por "
+    "este pipeline mediante PONDERA; no constituyen una nueva estadística oficial provincial."
+)
+
+if DIR_ACTIVO is None:
+    st.error(
+        "No hay un histórico acompañado por estados de validación. Se conserva cualquier "
+        "archivo existente, pero no se lo muestra hasta que supere los controles críticos."
     )
     st.stop()
 
-df = df.sort_values(["anio", "trimestre"]).reset_index(drop=True)
-ultimo = df.iloc[-1]
+if USANDO_SNAPSHOT:
+    st.info(
+        "El tablero está usando el snapshot agregado y validado. No necesita ZIP ni "
+        "microdatos individuales para funcionar."
+    )
+else:
+    st.success("El tablero está usando resultados locales validados.")
 
-# ─── Pestañas ───────────────────────────────────────────────────────────────
-tab1, tab2, tab3, tab4, tab5 = st.tabs([
-    "📈 Resumen",
-    "📊 Análisis",
-    "✓ Calidad y validación",
-    "💡 Hallazgos",
-    "⬇ Descargas",
+historico = leer_csv(DIR_ACTIVO / "historico_SDE.csv")
+estados = leer_csv(DIR_ACTIVO / "estado_periodos.csv")
+meta_historico = leer_json(DIR_ACTIVO / "historico_SDE.meta.json") or {}
+
+if historico is None or historico.empty or estados is None:
+    st.error("Los archivos validados no pudieron leerse. Se requiere revisar el snapshot.")
+    st.stop()
+
+historico["periodo"] = historico["periodo"].map(normalizar_periodo)
+estados["periodo"] = estados["periodo"].map(normalizar_periodo)
+estados["estado"] = estados["estado"].map(normalizar_estado)
+if historico["periodo"].isna().any() or estados["periodo"].isna().any():
+    st.error("Hay períodos fuera del formato canónico YYYYTx en los archivos del dashboard.")
+    st.stop()
+
+periodos_validos = set(
+    estados.loc[estados["estado"].isin(ESTADOS_VALIDOS), "periodo"]
+)
+df = historico[historico["periodo"].isin(periodos_validos)].copy()
+df = df.sort_values(["anio", "trimestre"]).reset_index(drop=True)
+if df.empty:
+    st.error("No hay períodos con estado VALIDADO o PUBLICADO.")
+    st.stop()
+
+ultimo = df.iloc[-1]
+periodo_ultimo = str(ultimo["periodo"])
+estado_ultimo = estados.loc[estados["periodo"].astype(str) == periodo_ultimo].iloc[-1]
+
+tab_resumen, tab_evolucion, tab_ingresos, tab_calidad, tab_documentacion = st.tabs([
+    "Resumen ejecutivo",
+    "Evolución laboral",
+    "Ingresos",
+    "Calidad y auditoría",
+    "Documentación y descargas",
 ])
 
-# ═══════════════════════════════════════════════════════════════════════════
-# TAB 1 — RESUMEN
-# ═══════════════════════════════════════════════════════════════════════════
-with tab1:
-    st.header(f"Indicadores clave · {ultimo['periodo']}")
 
-    c1, c2, c3 = st.columns(3)
-    c1.metric("Tasa de actividad", f"{ultimo['tasa_actividad']:.2f}%")
-    c2.metric("Tasa de empleo", f"{ultimo['tasa_empleo']:.2f}%")
-    c3.metric("Tasa de desocupación", f"{ultimo['tasa_desocupacion']:.2f}%")
+with tab_resumen:
+    st.header("Resumen ejecutivo")
+    a, b, c = st.columns(3)
+    a.metric("Último período validado", periodo_ultimo)
+    b.metric("Estado de validación", str(estado_ultimo["estado"]))
+    b.caption(str(estado_ultimo.get("mensaje", "Sin mensaje adicional")))
+    c.metric(
+        "Fecha de actualización",
+        str(meta_historico.get("ultima_ejecucion_exitosa")
+            or meta_historico.get("fecha_hora_generacion") or "No disponible"),
+    )
 
-    c4, c5, c6 = st.columns(3)
-    c4.metric("Tasa de inactividad", f"{ultimo['tasa_inactividad']:.2f}%")
-    if pd.notna(ultimo.get("tasa_informalidad")):
-        c5.metric("Informalidad laboral", f"{ultimo['tasa_informalidad']:.2f}%")
-    else:
-        c5.metric("Informalidad laboral", "s/d")
-    ingreso = ultimo.get("ingreso_promedio_ponderado_observado")
-    if pd.notna(ingreso):
-        c6.metric("Ingreso promedio", f"${ingreso:,.0f}")
+    st.subheader("Indicadores principales")
+    c1, c2, c3, c4 = st.columns(4)
+    c1.metric("Tasa de actividad oficial", formato_tasa(ultimo.get("tasa_actividad_oficial")))
+    c2.metric("Tasa de empleo oficial", formato_tasa(ultimo.get("tasa_empleo_oficial")))
+    c3.metric("Tasa de desocupación", formato_tasa(ultimo.get("tasa_desocupacion")))
+    c4.metric("Proporción inactiva total", formato_tasa(ultimo.get("proporcion_inactiva_total")))
+    st.caption(
+        "La proporción inactiva total es complementaria: 100 menos la tasa de actividad oficial."
+    )
 
-    st.divider()
+    c5, c6, c7, c8 = st.columns(4)
+    c5.metric("Personas en muestra", formato_numero(ultimo.get("n_personas_muestra")))
+    c6.metric("Hogares en muestra", formato_numero(ultimo.get("n_hogares_muestra")))
+    c7.metric("Población total expandida", formato_numero(ultimo.get("poblacion_expandida_total")))
+    c8.metric("Tasa de informalidad", formato_tasa(ultimo.get("tasa_informalidad")))
+    if pd.isna(ultimo.get("tasa_informalidad")):
+        st.warning("La informalidad no está disponible porque la variable EMPLEO no existe en ese período.")
+    st.info(
+        "Advertencia territorial: los microdatos públicos identifican el aglomerado conjunto y "
+        "no permiten separar Santiago Capital de La Banda."
+    )
 
-    # Muestra y población
-    c7, c8, c9 = st.columns(3)
-    c7.metric("Personas en muestra", f"{int(ultimo['n_personas_muestra']):,}")
-    c8.metric("Hogares en muestra", f"{int(ultimo['n_hogares_muestra']):,}")
-    c9.metric("Población representada", f"{int(ultimo['poblacion_expandida_total']):,}")
 
-    st.divider()
-
-    # Evolución rápida
-    st.subheader("Evolución del mercado laboral")
-    cols_linea = [c for c in ["tasa_actividad", "tasa_empleo", "tasa_inactividad"]
-                  if c in df.columns]
-    st.line_chart(df.set_index("periodo")[cols_linea])
-
-    with st.expander("Ver base histórica completa"):
-        st.dataframe(df, use_container_width=True)
-
-# ═══════════════════════════════════════════════════════════════════════════
-# TAB 2 — ANÁLISIS (EDA)
-# ═══════════════════════════════════════════════════════════════════════════
-with tab2:
-    st.header("Análisis exploratorio")
-    st.caption("Cuatro visualizaciones clave de la evolución del mercado laboral.")
-
-    graficos = [
-        ("eda_1_mercado_laboral.png", "1 · Serie de tiempo del mercado laboral"),
-        ("eda_2_informalidad.png", "2 · Informalidad laboral"),
-        ("eda_3_ingresos_no_respuesta.png", "3 · Ingresos y no respuesta"),
-        ("eda_4_interanual.png", "4 · Comparación interanual"),
+with tab_evolucion:
+    st.header("Evolución laboral")
+    st.subheader("Actividad y empleo oficiales")
+    columnas_conjuntas = [
+        col for col in ["tasa_actividad_oficial", "tasa_empleo_oficial"] if col in df.columns
     ]
-
-    for i in range(0, len(graficos), 2):
-        col_a, col_b = st.columns(2)
-        with col_a:
-            mostrar_grafico(*graficos[i])
-        if i + 1 < len(graficos):
-            with col_b:
-                mostrar_grafico(*graficos[i + 1])
-
-# ═══════════════════════════════════════════════════════════════════════════
-# TAB 3 — CALIDAD Y VALIDACIÓN
-# ═══════════════════════════════════════════════════════════════════════════
-with tab3:
-    st.header("Calidad de datos y validación de esquema")
-
-    # Selector de trimestre
-    periodos = df["periodo"].tolist()
-    periodo_sel = st.selectbox("Seleccioná un trimestre", periodos, index=len(periodos) - 1)
-
-    col_izq, col_der = st.columns(2)
-
-    # Calidad de datos
-    with col_izq:
-        st.subheader("Calidad de datos")
-        calidad = leer_csv(f"calidad_datos_SDE_{periodo_sel}.csv")
-        if calidad is not None:
-            st.dataframe(calidad, use_container_width=True)
-            st.caption("Conteo de nulos y códigos especiales por variable clave.")
-        else:
-            st.info("Reporte de calidad no disponible para este trimestre.")
-
-    # Validación de esquema
-    with col_der:
-        st.subheader("Validación de esquema")
-        ruta_val = DIR_DATOS_ACTIVA / f"validacion_esquema_{periodo_sel}.json"
-        if ruta_val.exists():
-            with open(ruta_val, encoding="utf-8") as f:
-                val = json.load(f)
-            for base in ["individual", "hogar"]:
-                if base in val:
-                    nivel = val[base]["nivel"]
-                    icono = {"ok": "✅", "advertencia": "⚠️", "critico": "❌"}.get(nivel, "•")
-                    st.write(f"{icono} **Base {base}:** {nivel}")
-                    if val[base].get("opcionales_faltantes"):
-                        st.caption(f"Opcionales faltantes: {val[base]['opcionales_faltantes']}")
-        else:
-            st.info("Validación de esquema no disponible para este trimestre.")
-
-    st.divider()
-
-    # Metadatos del histórico
-    st.subheader("Metadatos del histórico")
-    meta = leer_metadatos("historico_SDE.csv")
-    if meta:
-        c1, c2, c3 = st.columns(3)
-        c1.metric("Versión pipeline", meta.get("version_pipeline", "s/d"))
-        c2.metric("Filas", meta["estructura"]["n_filas"])
-        c3.metric("Columnas", meta["estructura"]["n_columnas"])
-        st.caption(f"Generado: {meta.get('fecha_generacion', 's/d')} · "
-                   f"Hash: {meta['integridad']['hash_sha256_truncado']}")
-        with st.expander("Ver diccionario de columnas"):
-            esquema_df = pd.DataFrame(meta["esquema"])
-            st.dataframe(esquema_df, use_container_width=True)
+    if columnas_conjuntas:
+        st.line_chart(df.set_index("periodo")[columnas_conjuntas])
     else:
-        st.info("Metadatos no disponibles. Regenerá el histórico con el pipeline v2.1+")
+        st.info("Las tasas oficiales todavía no están disponibles.")
 
-# ═══════════════════════════════════════════════════════════════════════════
-# TAB 4 — HALLAZGOS
-# ═══════════════════════════════════════════════════════════════════════════
-with tab4:
-    st.header("Principales hallazgos")
+    izquierda, derecha = st.columns(2)
+    with izquierda:
+        st.subheader("Desocupación")
+        if "tasa_desocupacion" in df.columns:
+            st.line_chart(df.set_index("periodo")[["tasa_desocupacion"]])
+        else:
+            st.info("La tasa de desocupación no está disponible.")
+    with derecha:
+        st.subheader("Proporción inactiva total")
+        if "proporcion_inactiva_total" in df.columns:
+            st.line_chart(df.set_index("periodo")[["proporcion_inactiva_total"]])
+        else:
+            st.info("El indicador complementario no está disponible.")
 
-    primer = df.iloc[0]
+    st.subheader("Informalidad")
+    informalidad = df[["periodo", "tasa_informalidad"]].dropna() if "tasa_informalidad" in df else pd.DataFrame()
+    if len(informalidad) >= 2:
+        st.line_chart(informalidad.set_index("periodo"))
+    else:
+        st.info("No hay suficientes períodos con EMPLEO disponible para mostrar una evolución.")
+    st.caption(
+        "En 2023T1, 2023T2 y 2023T3, la variable necesaria para estimar informalidad "
+        "no está disponible. Por ese motivo, el indicador se presenta como no disponible "
+        "y no se realiza imputación ni se reemplazan faltantes por cero."
+    )
 
-    def variacion(col):
-        vi, vf = primer[col], ultimo[col]
-        if pd.isna(vi) or pd.isna(vf):
-            return None
-        delta = vf - vi
-        return vi, vf, delta
 
-    # Hallazgo 1
-    v = variacion("tasa_actividad")
-    if v:
-        st.subheader("1 · La participación laboral cae de forma sostenida")
-        st.write(f"La tasa de actividad pasó de **{v[0]:.1f}%** en {primer['periodo']} "
-                 f"a **{v[1]:.1f}%** en {ultimo['periodo']} "
-                 f"({'▼' if v[2] < 0 else '▲'} {abs(v[2]):.1f} puntos porcentuales). "
-                 f"Cada vez menos personas participan del mercado laboral.")
+with tab_ingresos:
+    st.header("Ingresos nominales")
+    c1, c2, c3 = st.columns(3)
+    c1.metric(
+        "Ingreso promedio ponderado",
+        formato_numero(ultimo.get("ingreso_promedio_ponderado_observado"), prefijo="$"),
+    )
+    c2.metric(
+        "Ingreso mediano",
+        formato_numero(ultimo.get("ingreso_mediano_observado"), prefijo="$"),
+    )
+    c3.metric(
+        "No respuesta de ingresos",
+        formato_tasa(ultimo.get("tasa_no_respuesta_ingresos_ocupados")),
+    )
+    st.warning(
+        "Los ingresos son nominales y no representan directamente variaciones del poder "
+        "adquisitivo. Para comparaciones reales se requiere deflactación."
+    )
+    columnas_ingresos = [
+        col for col in [
+            "ingreso_promedio_ponderado_observado", "ingreso_mediano_observado"
+        ] if col in df.columns
+    ]
+    if columnas_ingresos:
+        st.line_chart(df.set_index("periodo")[columnas_ingresos])
+    else:
+        st.info("No hay una serie de ingresos disponible.")
 
-    # Hallazgo 2
-    st.subheader("2 · La desocupación es estructuralmente baja")
-    st.write(f"La desocupación cerró en **{ultimo['tasa_desocupacion']:.2f}%**. "
-             f"Debe leerse junto a la alta informalidad: no refleja pleno empleo, "
-             f"sino que la economía informal absorbe a quienes no encuentran empleo formal.")
 
-    # Hallazgo 3
-    inf = df[df["tasa_informalidad"].notna()]
-    if len(inf) > 0:
-        st.subheader("3 · La informalidad es persistente y elevada")
-        st.write(f"Promedio del período: **{inf['tasa_informalidad'].mean():.1f}%**. "
-                 f"Más de la mitad de los ocupados trabaja sin registro en todos "
-                 f"los trimestres con datos disponibles (desde 4T2023).")
+with tab_calidad:
+    st.header("Calidad y auditoría")
+    validados = int(estados["estado"].isin(ESTADOS_VALIDOS).sum())
+    advertencias = 0
+    for periodo in df["periodo"].astype(str):
+        esquema_periodo = leer_json(DIR_ACTIVO / f"validacion_esquema_{periodo}.json") or {}
+        if any(
+            resultado.get("nivel") == "advertencia"
+            for resultado in esquema_periodo.values()
+            if isinstance(resultado, dict)
+        ):
+            advertencias += 1
+    c1, c2, c3 = st.columns(3)
+    c1.metric("Períodos validados", validados)
+    c2.metric("Períodos con advertencias", advertencias)
+    c3.metric("Última ejecución", str(estado_ultimo["estado"]))
 
-    # Hallazgo 4
-    v = variacion("tasa_no_respuesta_ingresos_ocupados")
-    if v:
-        st.subheader("4 · La no respuesta de ingresos creció en 2025")
-        st.write(f"Pasó de **{v[0]:.1f}%** a **{v[1]:.1f}%**. "
-                 f"Este fenómeno —posiblemente vinculado al contexto inflacionario— "
-                 f"es el objeto de estudio del modelo predictivo del Hito 3.")
+    st.subheader("Estado de períodos")
+    st.dataframe(estados, width="stretch", hide_index=True)
 
-# ═══════════════════════════════════════════════════════════════════════════
-# TAB 5 — DESCARGAS
-# ═══════════════════════════════════════════════════════════════════════════
-with tab5:
-    st.header("Descargar archivos generados")
+    periodo_seleccionado = st.selectbox(
+        "Período a auditar", df["periodo"].astype(str).tolist(), index=len(df) - 1
+    )
+    fila_periodo = df[df["periodo"].astype(str) == periodo_seleccionado].iloc[-1]
+    r1, r2, r3 = st.columns(3)
+    r1.metric("Personas en muestra", formato_numero(fila_periodo.get("n_personas_muestra")))
+    r2.metric("Hogares en muestra", formato_numero(fila_periodo.get("n_hogares_muestra")))
+    r3.metric(
+        "Población expandida", formato_numero(fila_periodo.get("poblacion_expandida_total"))
+    )
+    izquierda, derecha = st.columns(2)
+    with izquierda:
+        st.subheader("Variables, nulos y códigos especiales")
+        calidad = leer_csv(DIR_ACTIVO / f"calidad_datos_SDE_{periodo_seleccionado}.csv")
+        if calidad is not None and not calidad.empty:
+            st.dataframe(calidad, width="stretch", hide_index=True)
+        else:
+            calidad_agregada = leer_csv(DIR_ACTIVO / "calidad_snapshot_SDE.csv")
+            if calidad_agregada is not None:
+                fila_calidad = calidad_agregada[
+                    calidad_agregada["periodo"].astype(str) == periodo_seleccionado
+                ]
+                st.dataframe(fila_calidad, width="stretch", hide_index=True)
+                st.caption(
+                    "Control agregado del snapshot. Los conteos de nulos y códigos especiales por "
+                    "variable requieren regenerar el período desde los microdatos."
+                )
+            else:
+                st.info("No hay un reporte de calidad disponible para este período.")
+    with derecha:
+        st.subheader("Cambios de esquema")
+        esquema = leer_json(DIR_ACTIVO / f"validacion_esquema_{periodo_seleccionado}.json")
+        if esquema:
+            for base in ["individual", "hogar"]:
+                resultado = esquema.get(base, {})
+                st.write(f"**Base {base}:** {resultado.get('nivel', 'sin estado')}")
+                faltantes = resultado.get("obligatorias_faltantes", [])
+                opcionales = resultado.get("opcionales_faltantes", [])
+                st.caption(
+                    f"Obligatorias faltantes: {faltantes or 'ninguna'} · "
+                    f"Opcionales faltantes: {opcionales or 'ninguna'}"
+                )
+        else:
+            st.info("No hay validación de esquema disponible para este período.")
 
-    st.subheader("Archivo principal")
-    boton_descarga("historico_SDE.csv", "⬇ Descargar histórico completo (CSV)")
+    st.subheader("Validaciones lógicas")
+    validacion_publicacion = leer_json(
+        DIR_ACTIVO / f"validacion_publicacion_{periodo_seleccionado}.json"
+    )
+    if validacion_publicacion and validacion_publicacion.get("controles"):
+        st.dataframe(
+            pd.DataFrame(validacion_publicacion["controles"]),
+            width="stretch",
+            hide_index=True,
+        )
+    else:
+        fila = df[df["periodo"].astype(str) == periodo_seleccionado].iloc[-1]
+        chequeos = pd.DataFrame([
+            {"control": "población total positiva", "cumple": fila["poblacion_expandida_total"] > 0},
+            {"control": "tasas oficiales entre 0 y 100", "cumple": all(
+                0 <= float(fila[col]) <= 100
+                for col in ["tasa_actividad_oficial", "tasa_empleo_oficial", "tasa_desocupacion"]
+            )},
+            {"control": "actividad + proporción inactiva = 100", "cumple": abs(
+                float(fila["tasa_actividad_oficial"])
+                + float(fila["proporcion_inactiva_total"]) - 100
+            ) <= 0.02},
+        ])
+        st.dataframe(chequeos, width="stretch", hide_index=True)
 
-    st.divider()
-    st.subheader("Por trimestre")
-    periodos = df["periodo"].tolist()
-    periodo_dl = st.selectbox("Trimestre", periodos, index=len(periodos) - 1, key="dl")
-    col1, col2, col3 = st.columns(3)
-    with col1:
-        boton_descarga(f"indicadores_SDE_{periodo_dl}.csv", "Indicadores")
-    with col2:
-        boton_descarga(f"calidad_datos_SDE_{periodo_dl}.csv", "Calidad")
-    with col3:
-        boton_descarga(f"base_unida_SDE_{periodo_dl}.csv", "Base unida")
+    boton_descarga(
+        DIR_ACTIVO / f"indicadores_SDE_{periodo_seleccionado}.meta.json",
+        "Descargar metadatos del período",
+        f"meta_auditoria_{periodo_seleccionado}",
+    )
 
-    st.divider()
 
-    # Nota sobre indicadores operativos futuros
-    with st.expander("ℹ️ Sobre los indicadores operativos del relevamiento"):
-        st.markdown("""
-        Los microdatos públicos del INDEC permiten calcular los indicadores del
-        mercado laboral, pero **no incluyen la tasa de rechazo** ni el desempeño
-        operativo de los encuestadores.
+with tab_documentacion:
+    st.header("Documentación y descargas")
+    st.caption(f"Fuente activa: {DESCRIPCION_FUENTE}.")
+    c1, c2 = st.columns(2)
+    with c1:
+        st.subheader("Datos agregados")
+        boton_descarga(DIR_ACTIVO / "historico_SDE.csv", "Descargar histórico", "dl_hist")
+        boton_descarga(
+            DIR_ACTIVO / f"indicadores_SDE_{periodo_ultimo}.csv",
+            f"Descargar indicadores {periodo_ultimo}",
+            "dl_ind",
+        )
+        boton_descarga(
+            DIR_ACTIVO / f"calidad_datos_SDE_{periodo_ultimo}.csv",
+            f"Descargar calidad {periodo_ultimo}",
+            "dl_cal",
+        )
+        boton_descarga(DIR_ACTIVO / "estado_periodos.csv", "Descargar estado de períodos", "dl_estado")
+    with c2:
+        st.subheader("Metadatos y manifiesto")
+        boton_descarga(
+            DIR_ACTIVO / "historico_SDE.meta.json",
+            "Descargar metadatos del histórico",
+            "dl_meta_hist",
+        )
+        boton_descarga(
+            DIR_ACTIVO / "manifest_salidas.json",
+            "Descargar manifiesto de salidas",
+            "dl_manifest",
+        )
+        boton_descarga(
+            DIR_ACTIVO / f"validacion_esquema_{periodo_ultimo}.json",
+            "Descargar validación de esquema",
+            "dl_esquema",
+        )
 
-        Para incorporar esos indicadores se requiere el cruce con los **registros
-        internos de la DGEyC** (estado real de cada entrevista, motivo de no respuesta,
-        identificación de encuestadores). El pipeline ya está preparado para
-        incorporarlos cuando esos datos estén disponibles.
-        """)
+    st.subheader("Guías")
+    for nombre, etiqueta in [
+        ("DICCIONARIO_DATOS.md", "Diccionario de datos"),
+        ("GUIA_USO.md", "Guía de uso"),
+        ("METODOLOGIA.md", "Metodología"),
+    ]:
+        ruta = DIR_ACTIVO / nombre
+        if not ruta.exists():
+            ruta = DIR_DOCS / nombre
+        boton_descarga(ruta, f"Descargar {etiqueta}", f"doc_{nombre}")
 
-# ─── Pie ────────────────────────────────────────────────────────────────────
+    st.info(
+        "Los posibles indicadores operativos futuros requieren bases internas y una "
+        "definición institucional previa. No se derivan de los microdatos públicos."
+    )
+
+
 st.divider()
 st.caption(
     "Práctica Profesionalizante II · ITSE 2026 · "
-    "Achaval · Cabaña · Constantinidi · Gomez · Pinto Villegas · "
-    "Fuente: microdatos EPH-INDEC"
+    "Achaval · Cabaña · Constantinidi · Gomez · Pinto Villegas"
 )
