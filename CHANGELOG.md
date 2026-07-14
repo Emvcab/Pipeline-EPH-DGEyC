@@ -1,5 +1,15 @@
 # Historial de cambios
 
+## 3.0.0 — 2026-07-13
+
+- Separación entre tasas principales sobre población total y tasas específicas de 10 años y más.
+- Migración explícita de nombres históricos sin cambio silencioso de denominador.
+- Metadatos completos, manifiesto general y clasificación de cargas.
+- Estados por período, controles críticos y promoción transaccional.
+- Snapshot agregado para Streamlit, con conservación del anterior ante fallas.
+- Dashboard institucional en cinco secciones, sin afirmaciones predictivas.
+- Documentación metodológica y pruebas ampliadas.
+
 Todos los cambios relevantes del proyecto se documentan en este archivo.
 
 El formato sigue [Keep a Changelog](https://keepachangelog.com/es-ES/1.1.0/)

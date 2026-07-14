@@ -1,0 +1,279 @@
+{
+  "version_pipeline": "3.0.0",
+  "fecha_hora_generacion": "2026-07-13T20:25:35",
+  "aglomerado_codigo": 18,
+  "aglomerado_nombre": "Santiago del Estero - La Banda",
+  "cantidad_salidas": 30,
+  "salidas": [
+    {
+      "nombre_archivo": "calidad_snapshot_SDE.csv",
+      "ruta_relativa": "calidad_snapshot_SDE.csv",
+      "clasificacion_load": "Calidad",
+      "periodo": null,
+      "estado_validacion": "VALIDADO",
+      "archivo_metadatos": "calidad_snapshot_SDE.meta.json",
+      "fecha_generacion": "2026-07-13T20:25:35"
+    },
+    {
+      "nombre_archivo": "DICCIONARIO_DATOS.md",
+      "ruta_relativa": "DICCIONARIO_DATOS.md",
+      "clasificacion_load": "Disponibilización",
+      "periodo": null,
+      "estado_validacion": "VALIDADO",
+      "archivo_metadatos": "DICCIONARIO_DATOS.meta.json",
+      "fecha_generacion": "2026-07-13T20:25:35"
+    },
+    {
+      "nombre_archivo": "estado_periodos.csv",
+      "ruta_relativa": "estado_periodos.csv",
+      "clasificacion_load": "Auditoría",
+      "periodo": null,
+      "estado_validacion": "VALIDADO",
+      "archivo_metadatos": "estado_periodos.meta.json",
+      "fecha_generacion": "2026-07-13T20:25:35"
+    },
+    {
+      "nombre_archivo": "GUIA_USO.md",
+      "ruta_relativa": "GUIA_USO.md",
+      "clasificacion_load": "Disponibilización",
+      "periodo": null,
+      "estado_validacion": "VALIDADO",
+      "archivo_metadatos": "GUIA_USO.meta.json",
+      "fecha_generacion": "2026-07-13T20:25:35"
+    },
+    {
+      "nombre_archivo": "historico_SDE.csv",
+      "ruta_relativa": "historico_SDE.csv",
+      "clasificacion_load": "Crítica",
+      "periodo": null,
+      "estado_validacion": "VALIDADO",
+      "archivo_metadatos": "historico_SDE.meta.json",
+      "fecha_generacion": "2026-07-13T20:25:35"
+    },
+    {
+      "nombre_archivo": "indicadores_SDE_2023T1.csv",
+      "ruta_relativa": "indicadores_SDE_2023T1.csv",
+      "clasificacion_load": "Analítica",
+      "periodo": "2023T1",
+      "estado_validacion": "VALIDADO",
+      "archivo_metadatos": "indicadores_SDE_2023T1.meta.json",
+      "fecha_generacion": "2026-07-13T20:25:35"
+    },
+    {
+      "nombre_archivo": "indicadores_SDE_2023T2.csv",
+      "ruta_relativa": "indicadores_SDE_2023T2.csv",
+      "clasificacion_load": "Analítica",
+      "periodo": "2023T2",
+      "estado_validacion": "VALIDADO",
+      "archivo_metadatos": "indicadores_SDE_2023T2.meta.json",
+      "fecha_generacion": "2026-07-13T20:25:35"
+    },
+    {
+      "nombre_archivo": "indicadores_SDE_2023T3.csv",
+      "ruta_relativa": "indicadores_SDE_2023T3.csv",
+      "clasificacion_load": "Analítica",
+      "periodo": "2023T3",
+      "estado_validacion": "VALIDADO",
+      "archivo_metadatos": "indicadores_SDE_2023T3.meta.json",
+      "fecha_generacion": "2026-07-13T20:25:35"
+    },
+    {
+      "nombre_archivo": "indicadores_SDE_2023T4.csv",
+      "ruta_relativa": "indicadores_SDE_2023T4.csv",
+      "clasificacion_load": "Analítica",
+      "periodo": "2023T4",
+      "estado_validacion": "VALIDADO",
+      "archivo_metadatos": "indicadores_SDE_2023T4.meta.json",
+      "fecha_generacion": "2026-07-13T20:25:35"
+    },
+    {
+      "nombre_archivo": "indicadores_SDE_2024T1.csv",
+      "ruta_relativa": "indicadores_SDE_2024T1.csv",
+      "clasificacion_load": "Analítica",
+      "periodo": "2024T1",
+      "estado_validacion": "VALIDADO",
+      "archivo_metadatos": "indicadores_SDE_2024T1.meta.json",
+      "fecha_generacion": "2026-07-13T20:25:35"
+    },
+    {
+      "nombre_archivo": "indicadores_SDE_2024T2.csv",
+      "ruta_relativa": "indicadores_SDE_2024T2.csv",
+      "clasificacion_load": "Analítica",
+      "periodo": "2024T2",
+      "estado_validacion": "VALIDADO",
+      "archivo_metadatos": "indicadores_SDE_2024T2.meta.json",
+      "fecha_generacion": "2026-07-13T20:25:35"
+    },
+    {
+      "nombre_archivo": "indicadores_SDE_2024T3.csv",
+      "ruta_relativa": "indicadores_SDE_2024T3.csv",
+      "clasificacion_load": "Analítica",
+      "periodo": "2024T3",
+      "estado_validacion": "VALIDADO",
+      "archivo_metadatos": "indicadores_SDE_2024T3.meta.json",
+      "fecha_generacion": "2026-07-13T20:25:35"
+    },
+    {
+      "nombre_archivo": "indicadores_SDE_2024T4.csv",
+      "ruta_relativa": "indicadores_SDE_2024T4.csv",
+      "clasificacion_load": "Analítica",
+      "periodo": "2024T4",
+      "estado_validacion": "VALIDADO",
+      "archivo_metadatos": "indicadores_SDE_2024T4.meta.json",
+      "fecha_generacion": "2026-07-13T20:25:35"
+    },
+    {
+      "nombre_archivo": "indicadores_SDE_2025T1.csv",
+      "ruta_relativa": "indicadores_SDE_2025T1.csv",
+      "clasificacion_load": "Analítica",
+      "periodo": "2025T1",
+      "estado_validacion": "VALIDADO",
+      "archivo_metadatos": "indicadores_SDE_2025T1.meta.json",
+      "fecha_generacion": "2026-07-13T20:25:35"
+    },
+    {
+      "nombre_archivo": "indicadores_SDE_2025T2.csv",
+      "ruta_relativa": "indicadores_SDE_2025T2.csv",
+      "clasificacion_load": "Analítica",
+      "periodo": "2025T2",
+      "estado_validacion": "VALIDADO",
+      "archivo_metadatos": "indicadores_SDE_2025T2.meta.json",
+      "fecha_generacion": "2026-07-13T20:25:35"
+    },
+    {
+      "nombre_archivo": "indicadores_SDE_2025T3.csv",
+      "ruta_relativa": "indicadores_SDE_2025T3.csv",
+      "clasificacion_load": "Analítica",
+      "periodo": "2025T3",
+      "estado_validacion": "VALIDADO",
+      "archivo_metadatos": "indicadores_SDE_2025T3.meta.json",
+      "fecha_generacion": "2026-07-13T20:25:35"
+    },
+    {
+      "nombre_archivo": "indicadores_SDE_2025T4.csv",
+      "ruta_relativa": "indicadores_SDE_2025T4.csv",
+      "clasificacion_load": "Analítica",
+      "periodo": "2025T4",
+      "estado_validacion": "VALIDADO",
+      "archivo_metadatos": "indicadores_SDE_2025T4.meta.json",
+      "fecha_generacion": "2026-07-13T20:25:35"
+    },
+    {
+      "nombre_archivo": "METODOLOGIA.md",
+      "ruta_relativa": "METODOLOGIA.md",
+      "clasificacion_load": "Disponibilización",
+      "periodo": null,
+      "estado_validacion": "VALIDADO",
+      "archivo_metadatos": "METODOLOGIA.meta.json",
+      "fecha_generacion": "2026-07-13T20:25:35"
+    },
+    {
+      "nombre_archivo": "validacion_esquema_2023T1.json",
+      "ruta_relativa": "validacion_esquema_2023T1.json",
+      "clasificacion_load": "Auditoría",
+      "periodo": "2023T1",
+      "estado_validacion": "VALIDADO",
+      "archivo_metadatos": "validacion_esquema_2023T1.meta.json",
+      "fecha_generacion": "2026-07-13T20:25:35"
+    },
+    {
+      "nombre_archivo": "validacion_esquema_2023T2.json",
+      "ruta_relativa": "validacion_esquema_2023T2.json",
+      "clasificacion_load": "Auditoría",
+      "periodo": "2023T2",
+      "estado_validacion": "VALIDADO",
+      "archivo_metadatos": "validacion_esquema_2023T2.meta.json",
+      "fecha_generacion": "2026-07-13T20:25:35"
+    },
+    {
+      "nombre_archivo": "validacion_esquema_2023T3.json",
+      "ruta_relativa": "validacion_esquema_2023T3.json",
+      "clasificacion_load": "Auditoría",
+      "periodo": "2023T3",
+      "estado_validacion": "VALIDADO",
+      "archivo_metadatos": "validacion_esquema_2023T3.meta.json",
+      "fecha_generacion": "2026-07-13T20:25:35"
+    },
+    {
+      "nombre_archivo": "validacion_esquema_2023T4.json",
+      "ruta_relativa": "validacion_esquema_2023T4.json",
+      "clasificacion_load": "Auditoría",
+      "periodo": "2023T4",
+      "estado_validacion": "VALIDADO",
+      "archivo_metadatos": "validacion_esquema_2023T4.meta.json",
+      "fecha_generacion": "2026-07-13T20:25:35"
+    },
+    {
+      "nombre_archivo": "validacion_esquema_2024T1.json",
+      "ruta_relativa": "validacion_esquema_2024T1.json",
+      "clasificacion_load": "Auditoría",
+      "periodo": "2024T1",
+      "estado_validacion": "VALIDADO",
+      "archivo_metadatos": "validacion_esquema_2024T1.meta.json",
+      "fecha_generacion": "2026-07-13T20:25:35"
+    },
+    {
+      "nombre_archivo": "validacion_esquema_2024T2.json",
+      "ruta_relativa": "validacion_esquema_2024T2.json",
+      "clasificacion_load": "Auditoría",
+      "periodo": "2024T2",
+      "estado_validacion": "VALIDADO",
+      "archivo_metadatos": "validacion_esquema_2024T2.meta.json",
+      "fecha_generacion": "2026-07-13T20:25:35"
+    },
+    {
+      "nombre_archivo": "validacion_esquema_2024T3.json",
+      "ruta_relativa": "validacion_esquema_2024T3.json",
+      "clasificacion_load": "Auditoría",
+      "periodo": "2024T3",
+      "estado_validacion": "VALIDADO",
+      "archivo_metadatos": "validacion_esquema_2024T3.meta.json",
+      "fecha_generacion": "2026-07-13T20:25:35"
+    },
+    {
+      "nombre_archivo": "validacion_esquema_2024T4.json",
+      "ruta_relativa": "validacion_esquema_2024T4.json",
+      "clasificacion_load": "Auditoría",
+      "periodo": "2024T4",
+      "estado_validacion": "VALIDADO",
+      "archivo_metadatos": "validacion_esquema_2024T4.meta.json",
+      "fecha_generacion": "2026-07-13T20:25:35"
+    },
+    {
+      "nombre_archivo": "validacion_esquema_2025T1.json",
+      "ruta_relativa": "validacion_esquema_2025T1.json",
+      "clasificacion_load": "Auditoría",
+      "periodo": "2025T1",
+      "estado_validacion": "VALIDADO",
+      "archivo_metadatos": "validacion_esquema_2025T1.meta.json",
+      "fecha_generacion": "2026-07-13T20:25:35"
+    },
+    {
+      "nombre_archivo": "validacion_esquema_2025T2.json",
+      "ruta_relativa": "validacion_esquema_2025T2.json",
+      "clasificacion_load": "Auditoría",
+      "periodo": "2025T2",
+      "estado_validacion": "VALIDADO",
+      "archivo_metadatos": "validacion_esquema_2025T2.meta.json",
+      "fecha_generacion": "2026-07-13T20:25:35"
+    },
+    {
+      "nombre_archivo": "validacion_esquema_2025T3.json",
+      "ruta_relativa": "validacion_esquema_2025T3.json",
+      "clasificacion_load": "Auditoría",
+      "periodo": "2025T3",
+      "estado_validacion": "VALIDADO",
+      "archivo_metadatos": "validacion_esquema_2025T3.meta.json",
+      "fecha_generacion": "2026-07-13T20:25:35"
+    },
+    {
+      "nombre_archivo": "validacion_esquema_2025T4.json",
+      "ruta_relativa": "validacion_esquema_2025T4.json",
+      "clasificacion_load": "Auditoría",
+      "periodo": "2025T4",
+      "estado_validacion": "VALIDADO",
+      "archivo_metadatos": "validacion_esquema_2025T4.meta.json",
+      "fecha_generacion": "2026-07-13T20:25:35"
+    }
+  ]
+}

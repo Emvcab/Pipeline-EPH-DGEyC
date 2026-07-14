@@ -1,0 +1,24 @@
+{
+  "nombre_archivo": "validacion_esquema_2024T4.json",
+  "descripcion": "Validación de esquema conservada para 2024T4.",
+  "clasificacion_load": "Auditoría",
+  "fuente": "Encuesta Permanente de Hogares - microdatos públicos",
+  "organismo_productor": "Instituto Nacional de Estadística y Censos (INDEC)",
+  "url_origen": "https://www.indec.gob.ar/ftp/cuadros/menusuperior/eph/",
+  "aglomerado_codigo": 18,
+  "aglomerado_nombre": "Santiago del Estero - La Banda",
+  "periodo": "2024T4",
+  "anio": 2024,
+  "trimestre": 4,
+  "fecha_hora_generacion": "2026-07-13T20:25:35",
+  "version_pipeline": "3.0.0",
+  "estado_validacion": "VALIDADO",
+  "ultima_ejecucion_exitosa": "2026-07-13T20:25:35",
+  "archivo_origen": "validacion_esquema_2024T4.json",
+  "identificador_ejecucion": "9a23bf5c9bf7513d",
+  "hash_sha256": "cce584cac122b9ebfb96a2ce384e060ce579b805589ad2f4b304d856b873f12c",
+  "advertencias_metodologicas": [
+    "El aglomerado 18 no permite separar Santiago Capital de La Banda."
+  ],
+  "ingresos_nominales": false
+}

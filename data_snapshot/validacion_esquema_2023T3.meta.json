@@ -1,0 +1,24 @@
+{
+  "nombre_archivo": "validacion_esquema_2023T3.json",
+  "descripcion": "Validación de esquema conservada para 2023T3.",
+  "clasificacion_load": "Auditoría",
+  "fuente": "Encuesta Permanente de Hogares - microdatos públicos",
+  "organismo_productor": "Instituto Nacional de Estadística y Censos (INDEC)",
+  "url_origen": "https://www.indec.gob.ar/ftp/cuadros/menusuperior/eph/",
+  "aglomerado_codigo": 18,
+  "aglomerado_nombre": "Santiago del Estero - La Banda",
+  "periodo": "2023T3",
+  "anio": 2023,
+  "trimestre": 3,
+  "fecha_hora_generacion": "2026-07-13T20:25:35",
+  "version_pipeline": "3.0.0",
+  "estado_validacion": "VALIDADO",
+  "ultima_ejecucion_exitosa": "2026-07-13T20:25:35",
+  "archivo_origen": "validacion_esquema_2023T3.json",
+  "identificador_ejecucion": "1cdbc0f1bc1edaf9",
+  "hash_sha256": "cd93e450302490e61509ed79f97fa661a4ced49613596b282633094e4d1138cb",
+  "advertencias_metodologicas": [
+    "El aglomerado 18 no permite separar Santiago Capital de La Banda."
+  ],
+  "ingresos_nominales": false
+}

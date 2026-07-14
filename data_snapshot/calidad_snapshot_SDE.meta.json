@@ -1,0 +1,87 @@
+{
+  "nombre_archivo": "calidad_snapshot_SDE.csv",
+  "descripcion": "Controles de calidad agregados del snapshot; no reemplazan el reporte de microdatos.",
+  "clasificacion_load": "Calidad",
+  "fuente": "Encuesta Permanente de Hogares - microdatos públicos",
+  "organismo_productor": "Instituto Nacional de Estadística y Censos (INDEC)",
+  "url_origen": "https://www.indec.gob.ar/ftp/cuadros/menusuperior/eph/",
+  "aglomerado_codigo": 18,
+  "aglomerado_nombre": "Santiago del Estero - La Banda",
+  "periodo": null,
+  "anio": null,
+  "trimestre": null,
+  "fecha_hora_generacion": "2026-07-13T20:25:35",
+  "version_pipeline": "3.0.0",
+  "filas": 12,
+  "columnas": 7,
+  "variables": [
+    "periodo",
+    "poblacion_total_positiva",
+    "tasas_en_rango",
+    "actividad_inactividad_consistente",
+    "periodo_duplicado",
+    "estado_informalidad",
+    "observacion"
+  ],
+  "definicion_variables": {
+    "periodo": "Período en formato AAAATn",
+    "poblacion_total_positiva": "Indica si la población expandida es mayor que cero",
+    "tasas_en_rango": "Indica si las tasas disponibles están entre 0 y 100",
+    "actividad_inactividad_consistente": "Indica si actividad oficial más proporción inactiva suma 100",
+    "periodo_duplicado": "Indica si el período aparece duplicado en el histórico",
+    "estado_informalidad": "Disponibilidad del indicador de informalidad",
+    "observacion": "Explicación del control agregado"
+  },
+  "tipos_de_datos": {
+    "periodo": "object",
+    "poblacion_total_positiva": "bool",
+    "tasas_en_rango": "bool",
+    "actividad_inactividad_consistente": "bool",
+    "periodo_duplicado": "bool",
+    "estado_informalidad": "object",
+    "observacion": "object"
+  },
+  "unidades": {
+    "periodo": "conteo, código o texto",
+    "poblacion_total_positiva": "conteo, código o texto",
+    "tasas_en_rango": "conteo, código o texto",
+    "actividad_inactividad_consistente": "conteo, código o texto",
+    "periodo_duplicado": "conteo, código o texto",
+    "estado_informalidad": "conteo, código o texto",
+    "observacion": "conteo, código o texto"
+  },
+  "formulas": {},
+  "filtros_aplicados": [
+    "AGLOMERADO = 18",
+    "P21 > 0 para estadísticas de ingresos",
+    "PONDERA válida y positiva para promedios ponderados de ingresos"
+  ],
+  "ponderador": "PONDERA",
+  "cantidad_nulos": {
+    "periodo": 0,
+    "poblacion_total_positiva": 0,
+    "tasas_en_rango": 0,
+    "actividad_inactividad_consistente": 0,
+    "periodo_duplicado": 0,
+    "estado_informalidad": 0,
+    "observacion": 0
+  },
+  "codigos_especiales": {
+    "-9": "no respuesta",
+    "-8": "no sabe",
+    "-7": "otro especial"
+  },
+  "advertencias_metodologicas": [
+    "No se imputan valores faltantes ni se reemplazan por cero.",
+    "Los ingresos se expresan en pesos argentinos nominales y no están deflactados.",
+    "La informalidad permanece nula cuando EMPLEO no está disponible.",
+    "proporcion_inactiva_total es un indicador complementario de la tasa de actividad oficial.",
+    "El aglomerado 18 no permite separar Santiago Capital de La Banda."
+  ],
+  "ingresos_nominales": false,
+  "estado_validacion": "VALIDADO",
+  "ultima_ejecucion_exitosa": "2026-07-13T20:25:35",
+  "archivo_origen": "historico_SDE.csv",
+  "identificador_ejecucion": "e4dad003a486bb76",
+  "hash_sha256": "6d4fe77f9441a6efa41f0e3ca917ce85a4ff29b87b5edd0fc88e98a6cc3ed8f1"
+}
