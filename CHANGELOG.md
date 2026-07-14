@@ -1,5 +1,11 @@
 # Historial de cambios
 
+Todos los cambios relevantes del proyecto se documentan en este archivo.
+
+El formato sigue [Keep a Changelog](https://keepachangelog.com/es-ES/1.1.0/)
+y el versionado [Semantic Versioning](https://semver.org/lang/es/).
+
+
 ## 3.0.0 — 2026-07-13
 
 - Separación entre tasas principales sobre población total y tasas específicas de 10 años y más.
@@ -10,11 +16,7 @@
 - Dashboard institucional en cinco secciones, sin afirmaciones predictivas.
 - Documentación metodológica y pruebas ampliadas.
 
-Todos los cambios relevantes del proyecto se documentan en este archivo.
-
-El formato sigue [Keep a Changelog](https://keepachangelog.com/es-ES/1.1.0/)
-y el versionado [Semantic Versioning](https://semver.org/lang/es/).
-
+---
 
 ## [2.2.0] — 2026-06-30
 

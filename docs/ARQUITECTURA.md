@@ -46,3 +46,14 @@ Los metadatos se generan automáticamente para cada CSV y salida de auditoría. 
 `notebooks/app.py` usa rutas relativas. Prioriza `results/` sólo si el último período está validado; de lo contrario usa `data_snapshot/`. Los gráficos se construyen desde CSV agregados.
 
 Las cargas se distinguen como Crítica, Analítica, Calidad, Auditoría, Operativa, Visualización y Disponibilización. En una etapa posterior pueden agregarse métricas por etapa sin modificar las fórmulas públicas.
+
+## Cuellos de botella y límites actuales
+
+- **Dependencia del INDEC.** El pipeline necesita que el INDEC publique el trimestre y sostenga la URL y el empaquetado actuales. Si la publicación se demora o cambia de ubicación, no hay dato nuevo que procesar y el período queda `PENDIENTE`.
+- **Cambios de formato de origen.** Nombres de archivos, variables, codificación o separadores pueden cambiar entre trimestres. La lectura prueba cuatro combinaciones conocidas y la validación de esquema detiene el proceso ante faltantes críticos, pero un cambio profundo exige actualizar los esquemas esperados en el código.
+- **Descarga y lectura completas antes del filtrado.** Cada corrida baja el ZIP nacional y carga la base completa en memoria antes de filtrar el Aglomerado 18. La descarga depende de la red y es la etapa más lenta; la lectura carga cientos de columnas de todos los aglomerados para conservar unas 1.500 filas locales.
+- **Crecimiento en memoria y tiempo.** El consumo escala con el tamaño de las bases nacionales y con la cantidad de períodos o variables que se agreguen. Con 12 trimestres el procesamiento local demora segundos por período una vez descargados los ZIP; el histórico agregado, en cambio, crece una fila por trimestre y no compromete recursos.
+- **Publicación con revisión humana.** La actualización del snapshot es una decisión deliberada (`--publicar-snapshot` tras revisar el estado `VALIDADO`), no un proceso automático. Es un límite aceptado: prioriza la revisión institucional sobre la inmediatez.
+- **Regeneración tras cambios.** Cualquier cambio de fórmulas, columnas o períodos exige regenerar snapshot y manifiesto para que datos, metadatos y hashes vuelvan a ser coherentes.
+
+Estas limitaciones están controladas de manera parcial por las validaciones de esquema y de publicación, la construcción en staging, los estados por período y el rollback que conserva el último resultado válido. Controlan el efecto de una falla, no su causa: la disponibilidad y el formato del origen siguen fuera del alcance del sistema.
